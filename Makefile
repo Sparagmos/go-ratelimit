@@ -1,6 +1,6 @@
 .PHONY: build run
 build:
-	go build -o bin/rate_limit ./cmd/rate_limit
+	go build -o "$(go env GOPATH)/bin/go-ratelimit" ./cmd/go_ratelimit
 
 run:
-	go run ./cmd/rate_limit --help
+	go run ./cmd/go_ratelimit --help

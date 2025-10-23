@@ -16,7 +16,7 @@ type result struct {
 	dur  time.Duration
 }
 
-func Run(ctx context.Context, cfg Config) {
+func Run(ctx context.Context, cfg Config) error {
 	m := &Metrics{CodeCounts: make(map[int]int64)}
 	m.Start()
 
@@ -54,7 +54,7 @@ func Run(ctx context.Context, cfg Config) {
 			wg.Wait()
 			close(results)
 			finalReport(m)
-			return
+			return nil
 		case <-ticker.C:
 			m.PrintHUD()
 		}
@@ -132,14 +132,19 @@ func finalReport(m *Metrics) {
 		count int64
 	}
 	for c, k := range m.CodeCounts {
-		arr = append(arr, struct{ code int; count int64 }{c, k})
+		arr = append(arr, struct {
+			code  int
+			count int64
+		}{c, k})
 	}
 	m.CodeMu.Unlock()
 	sort.Slice(arr, func(i, j int) bool { return arr[i].count > arr[j].count })
 	if len(arr) > 0 {
 		fmt.Println("Status code breakdown:")
 		for i, kv := range arr {
-			if i >= 15 { break }
+			if i >= 15 {
+				break
+			}
 			fmt.Printf("  %d: %d\n", kv.code, kv.count)
 		}
 	}

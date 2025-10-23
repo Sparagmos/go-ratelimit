@@ -3,9 +3,10 @@ package ratelimit
 import (
 	"bytes"
 	"compress/gzip"
+	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
+	"os"
 	"strings"
 )
 
@@ -35,10 +36,26 @@ func DoTestOutput(cfg Config) {
 	if strings.Contains(resp.Header.Get("Content-Encoding"), "gzip") {
 		gz, err := gzip.NewReader(resp.Body)
 		if err == nil {
-			defer gz.Close()
-			reader = gz
+			fmt.Fprintf(os.Stderr, "Failed to create gzip reader: %v\n", err)
+			return
 		}
+		defer gz.Close()
+		reader = gz
+	} else {
+		reader = resp.Body
 	}
-	data, _ := io.ReadAll(reader)
-	fmt.Println(string(bytes.TrimSpace(data)))
+
+	bodyBytes, err := io.ReadAll(reader)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to read response body: %v\n", err)
+		return
+	}
+
+	// try to pretty print JSON if applicable
+	var pretty bytes.Buffer
+	if json.Indent(&pretty, bodyBytes, "", "  ") == nil {
+		fmt.Println(pretty.String())
+	} else {
+		fmt.Println(string(bodyBytes))
+	}
 }

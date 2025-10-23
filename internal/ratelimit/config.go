@@ -1,12 +1,25 @@
 package ratelimit
 
-import "time"
+import (
+	"strings"
+	"time"
+)
 
-type HeaderList []string
+type Header struct {
+	Key   string
+	Value string
+}
+type HeaderList []Header
 
 func (h *HeaderList) String() string { return "" }
 func (h *HeaderList) Set(v string) error {
-	*h = append(*h, v)
+	parts := strings.SplitN(v, ":", 2)
+	key := strings.TrimSpace(parts[0])
+	val := ""
+	if len(parts) == 2 {
+		val = strings.TrimSpace(parts[1])
+	}
+	*h = append(*h, Header{Key: key, Value: val})
 	return nil
 }
 

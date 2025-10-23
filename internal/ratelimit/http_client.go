@@ -5,7 +5,19 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strings"
 )
+
+// hasHeader checks if cfg.Headers already contains a header with the given key (case-insensitive).
+func hasHeader(headers HeaderList, key string) bool {
+	keyLower := strings.ToLower(strings.TrimSpace(key))
+	for _, h := range headers {
+		if strings.ToLower(strings.TrimSpace(h.Key)) == keyLower {
+			return true
+		}
+	}
+	return false
+}
 
 func buildRequest(cfg Config) (*http.Request, error) {
 	var body io.Reader
@@ -16,20 +28,31 @@ func buildRequest(cfg Config) (*http.Request, error) {
 		}
 		body = bytes.NewReader(data)
 	}
+
 	req, err := http.NewRequest(cfg.Method, cfg.URL, body)
 	if err != nil {
 		return nil, err
 	}
-	for _, hdr := range cfg.Headers {
-		parts := bytes.SplitN([]byte(hdr), []byte(":"), 2)
-		if len(parts) == 2 {
-			req.Header.Set(string(bytes.TrimSpace(parts[0])), string(bytes.TrimSpace(parts[1])))
+
+	// Apply structured headers
+	for _, h := range cfg.Headers {
+		key := strings.TrimSpace(h.Key)
+		val := strings.TrimSpace(h.Value)
+		req.Header.Set(key, val)
+	}
+
+	// Add Bearer token if missing
+	if strings.TrimSpace(cfg.Bearer) != "" && !hasHeader(cfg.Headers, "Authorization") {
+		b := strings.TrimSpace(cfg.Bearer)
+		if !strings.HasPrefix(strings.ToLower(b), "bearer ") {
+			b = "Bearer " + b
 		}
+		req.Header.Set("Authorization", b)
 	}
-	if cfg.Bearer != "" {
-		req.Header.Set("Authorization", cfg.Bearer)
-	}
+
+	// Set HTTP version string for visibility
 	req.Proto = "HTTP/" + cfg.HTTPVersion
+
 	return req, nil
 }
 
