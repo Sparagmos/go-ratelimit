@@ -27,6 +27,7 @@ func DoTestOutput(cfg Config) {
 
 	fmt.Printf("<<< Response: %d %s\n", resp.StatusCode, resp.Status)
 	fmt.Println("---- Headers ----")
+	fmt.Printf("---- HTTP Version %s", cfg.HTTPVersion)
 	for k, v := range resp.Header {
 		fmt.Printf("%s: %s\n", k, strings.Join(v, ", "))
 	}

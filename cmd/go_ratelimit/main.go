@@ -12,6 +12,8 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
+var version = "v0.0.1-dev"
+
 func main() {
 	// --- Define flags ---
 	url := flag.StringP("url", "u", "", "Target URL to test")
@@ -23,8 +25,15 @@ func main() {
 	duration := flag.DurationP("duration", "t", time.Minute, "How long to run the test")
 	workers := flag.IntP("workers", "w", 500, "Number of concurrent workers")
 	testOutput := flag.Bool("test-output", false, "Send a single request and print formatted response")
+	versionFlag := flag.BoolP("version", "v", false, "Print version and exit")
 
 	flag.Parse()
+
+	// --- Check for version flag
+	if *versionFlag {
+		fmt.Println("go-ratelimit", version)
+		os.Exit(0)
+	}
 
 	if *url == "" {
 		fmt.Println("Error: --url (-u) is required")
